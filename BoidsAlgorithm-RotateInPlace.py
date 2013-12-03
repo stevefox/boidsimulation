@@ -64,10 +64,10 @@ class Boid:
         # Dynamical State
         ###########################################
         #: position
-        self.pos = np.array([x, y])
+        self.pos = np.array([x, y, angle])
         #: velocity
-        # [current speed, current heading]
-        self.vel = np.array([0.0, 90])
+        # [current speed, current rot_vel]
+        self.vel = np.array([0.0, 1])
         #: acceleration (this is what the rules affect)
         # [forward, rotational]
         self.accel = np.array([5.0, 5])
@@ -86,8 +86,8 @@ class Boid:
         ############################################
         #: Boid Parameters
         ############################################
-        self.max_vel = 10 # [px] / frame
-        self.max_accel = np.array([5, 30]) # magnitude [px] / frame; rotational [deg] / frame
+        self.max_vel = 10
+        self.max_accel = np.array([5, 15]) # magnitude [px] / frame; rotational [deg] / frame
         self.repulsion_coef = 2.5
     def __repr__(self):
         return "Boid at %f %f" % (self.pos[0], self.pos[1]) 
@@ -106,12 +106,17 @@ class Boid:
         
         #a2 = self.__velocity(neighbors)
         #a3 = self.__centering(neighbors)
-        self.vel[0] = np.linalg.norm(a1)
-        self.vel[1] = -np.rad2deg(np.arctan2(a1[1],a1[0]))
+        self.vel[0] += np.linalg.norm(a1)
+        self.vel[1] += -np.rad2deg(np.arctan2(a1[1],a1[0]))
         #self.vel += self.accel
         self.vel[1] %= 360
+
+        # saturate the maximum velocities
         if abs(self.vel[0]) > self.max_vel:
-            self.vel[0] = np.sign(self.vel[0])*self.max_vel
+            self.vel[0] = np.sign(self.vel[0])*self.max_vel:
+        if abs(self.vel[1]) > self.max_vel[1]:
+            self.vel[1] = np.sign(self.vel[1])*self.max_accel[1]
+
         self.pos[0] -= self.vel[0]*sin(np.deg2rad(self.vel[1]))
         #self.pos[0] += a1[0]
         self.pos[0] %= 1024 # wrap to screen
