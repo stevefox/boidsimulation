@@ -10,23 +10,21 @@
 # 
 # Consider how you, too, may be a boid in a crowd. How do people behave at a concert, or waiting in line for a crowded public event? The average person might try to maintain a small space between him or her and the others, to avoid being jostled around. That person will also try to keep the same speed as those around them: if he slows down too much, you might get trampled; if he goes too fast, he will be jostling the people around him. Further, anybody who is anybody wants to be in the center of the crowd, because the center of the crowd is where anybody who's anybody is. It is simple economics: that's the best place to be (for, perhaps, tangible or intangible reasons). In a natural flock, the center of the flock might be *safer* from predators. Finally, there may be some selfish or globally minded goal-oriented behavior: get to the front of the stage first, or get the best patch of grass when the venue opens.
 # 
-# Craig W. Reynolds published a paper in July of 1987 titled "Flocks, Herds, and Schools: A Distributed Behavioral Model" describing this behavior for the first time for efficient animation of crowds and flocks. [1] The intent of the paper was to share a computationally feasible method of rendering flocks for computer-generated animations. The computational complexity along with the difficult nature of specifying exact individual paths in large "flocks" (of people, animals, etc...) served as an impetus to explore a more feasible means of simulating the type of behavior exhibited by groups of objects. The boids algorithm is described very succinctly in [Steve Strogatz's](http://www.stevenstrogatz.com/) [Ted Talk on Syncrhonization in Nature](http://www.ted.com/talks/steven_strogatz_on_sync.html) with footage of flocks of birds and schools of fish found in nature (and majestic music in the background). 
+# Craig W. Reynolds published a paper in July of 1987 titled "Flocks, Herds, and Schools: A Distributed Behavioral Model" describing this behavior for the first time for efficient animation of crowds and flocks. [1] The intent of the paper was to share a computationally feasible method of rendering flocks for computer-generated animations. The computational complexity along with the difficult nature of specifying exact individual paths in large "flocks" (of people, animals, etc...) served as an impetus to explore a more feasible means of simulating the type of behavior exhibited by groups of objects. The essence of the boids algorithm is described very succinctly in [Steve Strogatz's](http://www.stevenstrogatz.com/) [Ted Talk on Syncrhonization in Nature](http://www.ted.com/talks/steven_strogatz_on_sync.html) with footage of flocks of birds and schools of fish found in nature (and majestic music in the background). 
 # 
 # ## Model of the Boid
 # _Boids_ (definition): The word _boid_ is short for _bird-oid_, or a "bird-like object". A _flock_ of boids is one whose emergent behavior displays the characteristics of natural flocks, herds and schools of animals. Simulating these behavioral characteristics is based on three local navigation rules for each _boid_ in the flock:
 # 
 # ![boid](files/img/boid-red.png "A 2D, directional boid")
 # 
-# 1. **Collision Avoidance**: Boids (or static or moving obstacles) within a 
+# 1. **Collision Avoidance**: Boids (or static or moving obstacles) try not to crash into things
 # 
+# 1. **Velocity Matching**: Boids try to pre-empt things that try to crash into them, and keep the pace
 # 
-# 1. **Velocity Matching**:
-# 
-# 1. **Flock Centering**:
+# 1. **Flock Centering**: Boids try to fly toward the center of the flock
 
 # <codecell>
 
-#: PyGame Skeleton Code based on Tutorial located at: http://www.pygame.org/docs/tut/intro/intro.html [2]
 import sys, pygame
 from pygame.locals import *
 from math import ceil
@@ -80,6 +78,7 @@ class Boid:
         # [x, y]
         self.vel = np.array([0.,0.])
         self.rot_vel = 0.0
+        
         #: acceleration (this is what the rules affect)
         # [translational, rotational]
         self.accel = np.array([0.0, 0.0])
@@ -112,44 +111,50 @@ class Boid:
         render_surf = pygame.transform.rotozoom(self.surf, render_angle, 1.0)
         #: Crop the Surface box
         rot_rect = render_surf.get_rect(center=(self.pos[0], self.pos[1]))
-        #: Overlay heading
-#        font = pygame.font.Font(None, 12)
-#        text = font.render(str(self), 1, (255, 255, 255))
-#        r = text.get_rect()
-#        render_surf.blit(text, r)
+        #: Overlay heading 
+        #font = pygame.font.Font(None, 12)
+        #text = font.render(str(self), 1, (255, 255, 255))
+        #r = text.get_rect()
+        #render_surf.blit(text, r)
         screen.blit(render_surf, rot_rect)
     
     def update(self, neighbors, close_neighbors, goal, predators=[]):
         #: apply all rules
         self.accel = np.array([0., 0.])
 
-#        a0 = self.__avoid_predators(predators)
+        if len(predators):
+            a0 = self.__avoid(predators)
+        else:
+            a0 = np.array([0.,0.])
         a1 = self.__avoid(close_neighbors)
         a2 = self.__seekgoal(goal)
         a3 = self.__centering(neighbors)
         a4, rot_vel = self.__velocity(neighbors)
 
-        self.accel = a1 #+ 0.01*a2 + 0.01*a3 + 0.1*a4
+        self.accel = 100*a0 
 
-#        if np.linalg.norm(self.accel) > self.max_accel[0]:
-#            print 'saturated acceleration already'
+        if np.linalg.norm(self.accel) < self.max_accel[0]:
+           new_accel = self.accel + 10*a1
+           if np.linalg.norm(self.accel) < self.max_accel[0]:
+               self.accel = new_accel
+         #+ 0.01*a2 + 0.01*a3 + 0.1*a4
 
         # Arbitrate acceleration by saturating the acceleration accumulator
         # as in [1]
         if np.linalg.norm(self.accel) < self.max_accel[0]:
-           new_accel = self.accel + 0.01*a2
+           new_accel = self.accel + 0.02*a2
            if np.linalg.norm(self.accel) < self.max_accel[0]:
                self.accel = new_accel
         if np.linalg.norm(self.accel) < self.max_accel[0]:
-            new_accel = self.accel + 0.01*a3
+            new_accel = self.accel + 0.02*a3
             if np.linalg.norm(new_accel) < self.max_accel[0]:
                 self.accel = new_accel
         if np.linalg.norm(self.accel) < self.max_accel[0]:
-            new_accel = self.accel + 0.01*a4
+            new_accel = self.accel + 0.02*a4
             if np.linalg.norm(new_accel) < self.max_accel[0]:
                 self.accel = new_accel
         
-        self.vel = self.accel + 0.1*self.vel
+        self.vel = self.accel# + 0.1*self.vel
 
         # Saturate the Velocity as well
         if np.linalg.norm(self.vel) > self.max_vel[0]:
@@ -162,30 +167,24 @@ class Boid:
             self.angle %= 360
        
         self.pos += self.vel
-        #self.pos[0] -= self.vel[0]*sin(np.deg2rad(self.vel[1]))
-        #self.pos[0] += a1[0]
-        self.pos[0] %= 1024 # wrap to screen
-        #self.pos[1] -=self.vel[0]*cos(np.deg2rad(self.vel[1]))
-        #self.pos[1] += a1[1]
+
+        self.pos[0] %= 1024 # wrap to screen (boids appear on the other side of screen)
         self.pos[1] %= 768 # wrap to screen
     
     ##################################
     # Rules in Order of Precedence
     ##################################
 
-    #: Rule 0: Avoid Predators
-#    def __avoid_predator(self, 
-
-
+    #: Rule 0: Avoid Predators    
     #: Rule 1: Collision Avoidance
     def __avoid(self, close_neighbors):
-        c = np.array([0.,0.])
+        xdot = np.array([0.,0.])
         for i in close_neighbors:
             if i[1] == 0:
-                c -= i[0].vel
+                xdot -= i[0].vel
             else:
-                c -= (i[0].pos-self.pos)/i[1]*(1.0/(i[1])) #*(1.0/i[1]**2) # repulsion is inverse exponentially repulsed by the object
-        return c
+                xdot -= (i[0].pos-self.pos)/i[1]*(1.0/(i[1])) #*(1.0/i[1]**2) # repulsion is inverse exponentially repulsed by the object
+        return xdot
 
     #: Rule 2: Velocity Matching
     def __velocity(self, neighbors):
@@ -220,9 +219,16 @@ class Boid:
         
         return accel_request
 
+    #: Rule 4: Migratory Urge
     def __seekgoal(self, goal):
         # goal should be np.array([mouse_x, mouse_y])
         accel_request = (goal-self.pos)
+        
+        #if np.linalg.norm(accel_request) < 500:
+        #if np.linalg.norm(accel_request) != 0:
+        #    accel_request /= np.linalg.norm(accel_request)
+        #else:
+        #    accel_request = np.array([0.,0.],dtype=np.float64)
         return accel_request
     
 class Flock:
@@ -235,20 +241,29 @@ class Flock:
         self.neighbor_distance = neighbor_distance
         self.boid_list = [ Boid(randint(1,1023), randint(1,768), randint(0,360), self.image_surface) for i in range(count) ]
         self.goal = np.array([0.0, 0.0], dtype=np.float64)
+        self.mouse_pos = (0,0) #don't use for computation, just rendering
+        self.mouse_predator = False
     #: Render the flock
     def draw(self):
         for i in self.boid_list:
             i.draw()
+        # draw the goal as a green circle
+        pygame.draw.circle(screen, (0,255,0), self.goal.astype(int), 10) # NOTE THAT SCREEN IS A GLOBAL VARIABLE
+        # optionally draw the predator as a red circle
+        if self.mouse_predator is True:
+            pygame.draw.circle(screen, (255,0,0), self.mouse_pos, 10)
+        
     def update(self, mouse_pos, mouse_predator):
         static_boid_list = self.boid_list[:] # need to research how to avoid this nonsense
-
+        self.mouse_predator = mouse_predator
+        self.mouse_pos = mouse_pos
         for i in self.boid_list:
             # find all neighbors within a radius=safe_distance
             close_neighbors = []
             neighbors = []
             predators = []
-
-            if mouse_predator:
+            
+            if self.mouse_predator:
                 predator = Boid(mouse_pos[0], mouse_pos[1], 0,  self.image_surface)
                 vector_diff = i.pos - predator.pos
                 distance = np.linalg.norm(vector_diff)
@@ -267,8 +282,11 @@ class Flock:
                 if distance < self.neighbor_distance:
                     neighbors.append( (j,distance) )
 
-            i.update(neighbors, close_neighbors, self.goal)
-#            print 'done with',i
+            i.update(neighbors, close_neighbors, self.goal, predators)
+
+# <headingcell level=2>
+
+# Game Loop
 
 # <codecell>
 
@@ -282,12 +300,12 @@ height = 768
 size = (width, height)
 
 black = 1.0, 1.0, 1.0
-white = 0.0, 0.0, 0.0
+white = 255,255,255
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Interactive Boid's Algorithm Simulation")
 
 #: Create and render the initial flock
-f = Flock(30, 50., 500.) # 50 [boids], 60 [pixels between boids], 
+f = Flock(30, 100., 500.) # [number of boids], [avoidance_distance], [neighborhood_distance]
 f.draw()
 pygame.display.flip()
 
@@ -305,16 +323,16 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             g_mouse_predator = not g_mouse_predator
     if True:
-                screen.fill(black)
+                screen.fill(white)
                 f.update(pygame.mouse.get_pos(), g_mouse_predator)
                 f.draw()
                 pygame.display.flip()
 
 # <markdowncell>
 
-# ## References
+# # References                                                                                                                                                               
 # 
-# [1]() Craig W. Reynolds. Flocks, Herds and Schools: A Distributed Behavioral Model. In _ACM SIGGRAPH Computer Graphics_, Volume 21, pp. 25-34. ACM, 1987. 
+# [1]() Craig W. Reynolds. Flocks, Herds and Schools: A Distributed Behavioral Model. In _ACM SIGGRAPH Computer Graphics_, Volume 21, pp. 25-34. ACM, 1987.
 # 
 # **Description:** The original boids algorithm paper
 # 
@@ -322,15 +340,18 @@ while True:
 # 
 # **Description:** Tutorial for using PyGame where I took the basic structure of the code
 # 
-# [3](http://www.kfish.org/boids/pseudocode.html) Conrad Parker. Boids Pseudocode. http://www.kfish.org/boids/pseudocode.html, 1995. Last Modified 06 September 2007. Accessed 01 December 2013.
+# [3](http://www.kfish.org/boids/pseudocode.html) Conrad Parker. Boids Pseudocode. http://www.kfish.org/boids/pseudocode.html, 1995. Last Modified 06 September 2007. Accesse\
+# d 01 December 2013.
 # 
 # **Description:** Pseudocode for the boids algorithm, with some additional notes and analysis.
 # 
-# [4](http://www.lionking.org/movies/Stampede.mov) Stampede Sequence from Disney's *The Lion King*, 1995. Available online at: http://www.lionking.org/movies/Stampede.mov. Originally Accessed from http://www.red3d.com/cwr/boids/.
-# 
-# **Description:** "Quick, Stampede, in the gorge. Simba's down there!"
-# 
-# [5](http://en.wikipedia.org/wiki/Cellular_automaton "Cellular Automata") "Cellular Automata on *Wikipedia.org*. http://en.wikipedia.org/wiki/Cellular_automaton. Accessed 02 December 2013."
-# 
-# **Description:** If you find this type of distributed, dynamical system interesting, you may also be interested in cellular automata. 
+# [4](http://www.lionking.org/movies/Stampede.mov) Stampede Sequence from Disney's *The Lion King*, 1995. Available online at: http://www.lionking.org/movies/Stampede.mov. O\
+# riginally Accessed from http://www.red3d.com/cwr/boids/.                                                                                                                    
+#                                                                                                                                                                             
+# **Description:** "Quick, Stampede, in the gorge. Simba's down there!"                                                                                                       
+#                                                                                                                                                                             
+# [5](http://en.wikipedia.org/wiki/Cellular_automaton "Cellular Automata") "Cellular Automata on *Wikipedia.org*. http://en.wikipedia.org/wiki/Cellular_automaton. Accessed 0\
+# 2 December 2013."                                                                                                                                                           
+#                                                                                                                                                                             
+# **Description:** If you find this type of distributed, dynamical system interesting, you may also be interested in cellular automata.     
 
