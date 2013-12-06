@@ -39,7 +39,7 @@ from copy import deepcopy # cheap hack; shot myself in the foot with python refe
 # Model the Boid as an object, as Reynolds suggests in the paper 
 # (OOP was not as popular back in 1987; this was originally done in Common LISP)
 
-###################################################################################################################################################
+###############################################################################################################
 # Model of the Boid
 #   * Could be considered an animal, such as a fish or bird, or a robot
 #   * Can only "see" within a small distance (a couple of body lengths), which I call the parameter "neighbor_distance"
@@ -56,7 +56,7 @@ from copy import deepcopy # cheap hack; shot myself in the foot with python refe
 #
 # Coordinate System
 #   * The coordinate system in pygame has (0,0) in the top left corner, with "+x" horizontal to the right, and "+y" vertically pointing downward.
-###################################################################################################################################################
+###############################################################################################################
 
 def saturate(value, max_value):
     if abs(value) > max_value:
@@ -67,9 +67,9 @@ class Boid:
     #: Initialize the boid at some position x,y
     def __init__(self, x, y, angle, image_surface):
         
-        ###########################################################################################################################################
+        #######################################################################################################
         # Dynamical State
-        ###########################################################################################################################################
+        #######################################################################################################
         #: position
         self.pos = np.array([x, y]) # [px] right = +x, down = +y, (0,0) in top left corner
         self.angle = angle # [deg] up = +x = 0[deg], left = +y = 90[deg]; current heading
@@ -84,9 +84,9 @@ class Boid:
         self.accel = np.array([0.0, 0.0])
         self.a2 = np.array([0.,0.])
         
-        ############################################################################################################################################
+        #######################################################################################################
         # Rendering
-        ############################################################################################################################################
+        #######################################################################################################
         #: image & rendering surfaces
         self.image_surface = image_surface
         self.surf = pygame.Surface((51,51),flags=pygame.SRCALPHA)
@@ -340,18 +340,15 @@ while True:
 # 
 # **Description:** Tutorial for using PyGame where I took the basic structure of the code
 # 
-# [3](http://www.kfish.org/boids/pseudocode.html) Conrad Parker. Boids Pseudocode. http://www.kfish.org/boids/pseudocode.html, 1995. Last Modified 06 September 2007. Accesse\
-# d 01 December 2013.
+# [3](http://www.kfish.org/boids/pseudocode.html) Conrad Parker. Boids Pseudocode. http://www.kfish.org/boids/pseudocode.html, 1995. Last Modified 06 September 2007. Accessed 01 December 2013.
 # 
 # **Description:** Pseudocode for the boids algorithm, with some additional notes and analysis.
 # 
-# [4](http://www.lionking.org/movies/Stampede.mov) Stampede Sequence from Disney's *The Lion King*, 1995. Available online at: http://www.lionking.org/movies/Stampede.mov. O\
-# riginally Accessed from http://www.red3d.com/cwr/boids/.                                                                                                                    
+# [4](http://www.lionking.org/movies/Stampede.mov) Stampede Sequence from Disney's *The Lion King*, 1995. Available online at: http://www.lionking.org/movies/Stampede.mov. Originally Accessed from http://www.red3d.com/cwr/boids/.                                                                                                                    
 #                                                                                                                                                                             
 # **Description:** "Quick, Stampede, in the gorge. Simba's down there!"                                                                                                       
 #                                                                                                                                                                             
-# [5](http://en.wikipedia.org/wiki/Cellular_automaton "Cellular Automata") "Cellular Automata on *Wikipedia.org*. http://en.wikipedia.org/wiki/Cellular_automaton. Accessed 0\
-# 2 December 2013."                                                                                                                                                           
+# [5](http://en.wikipedia.org/wiki/Cellular_automaton "Cellular Automata") "Cellular Automata on *Wikipedia.org*. http://en.wikipedia.org/wiki/Cellular_automaton. Accessed 02 December 2013."                                                                                                                                                           
 #                                                                                                                                                                             
 # **Description:** If you find this type of distributed, dynamical system interesting, you may also be interested in cellular automata.     
 
