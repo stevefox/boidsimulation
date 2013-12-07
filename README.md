@@ -12,4 +12,3 @@ You will need to download and install these Python Libraries in order to run the
 
 * [pygame](http://www.pygame.org)
 * [numpy](http://www.numpy.org)
-* [scipy](http://www.scipy.org)
